@@ -1,9 +1,5 @@
 "use strict";
 
-/////////////////////////////////////////////////
-/////////////////////////////////////////////////
-// BANKIST APP
-
 // Data
 const account1 = {
   owner: "Jonas Schmedtmann",
@@ -76,5 +72,23 @@ const displayMovements = function (movements) {
 
     containerMovements.insertAdjacentHTML("afterbegin", html);
   });
+
+  // const euroToUSD = 1.1;
+
+  // const movementsUSD = movements.map((mov) => mov * euroToUSD);
+  // console.log(movements);
+  // console.log(movementsUSD);
 };
 displayMovements(account1.movements);
+
+const createUserName = function (accs) {
+  accs.forEach(function (acc) {
+    acc.userName = acc.owner
+      .toLowerCase()
+      .split(" ")
+      .map((x) => x[0])
+      .join("");
+    console.log(acc.userName);
+  });
+};
+createUserName(accounts);
