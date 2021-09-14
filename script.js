@@ -57,6 +57,7 @@ const inputLoanAmount = document.querySelector(".form__input--loan-amount");
 const inputCloseUsername = document.querySelector(".form__input--user");
 const inputClosePin = document.querySelector(".form__input--pin");
 
+// Display Movements
 const displayMovements = function (movements) {
   containerMovements.innerHTML = "";
 
@@ -64,9 +65,11 @@ const displayMovements = function (movements) {
     const movementType = mov > 0 ? "deposit" : "withdrawal";
     const html = `
   <div class="movements__row">
-    <div class="movements__type movements__type--${movementType}">${i + 1} ${movementType}</div>
+    <div class="movements__type movements__type--${movementType}">${
+      i + 1
+    } ${movementType}</div>
     <div class="movements__date">3 days ago</div>
-    <div class="movements__value">${mov}</div>
+    <div class="movements__value">${mov}€</div>
   </div>
   `;
 
@@ -79,8 +82,32 @@ const displayMovements = function (movements) {
   // console.log(movements);
   // console.log(movementsUSD);
 };
-displayMovements(account1.movements);
 
+// Calculate & Display Balance
+const calcDisplayBalance = function (acc) {
+  acc.balance = acc.movements.reduce((acc, cur) => acc + cur, 0);
+  labelBalance.textContent = `${acc.balance}€`;
+};
+
+// Display Summary
+const calcDisplaySummary = function (acc) {
+  const deposits = acc.movements
+    .filter((mov) => mov > 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumIn.textContent = `${deposits}€`;
+  const withdrawals = acc.movements
+    .filter((mov) => mov < 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumOut.textContent = `${Math.abs(withdrawals)}€`;
+  const interest = acc.movements
+    .filter((mov) => mov > 0)
+    .map((deposit) => (deposit * acc.interestRate) / 100)
+    .filter((int) => int > 1)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumInterest.textContent = `${interest}€`;
+};
+
+// Create Username
 const createUserName = function (accs) {
   accs.forEach(function (acc) {
     acc.userName = acc.owner
@@ -88,7 +115,64 @@ const createUserName = function (accs) {
       .split(" ")
       .map((x) => x[0])
       .join("");
-    console.log(acc.userName);
   });
 };
 createUserName(accounts);
+
+//Update UI
+const updateUI = function (acc) {
+  // Display Movements
+  displayMovements(acc.movements);
+  // Display Balance
+  calcDisplayBalance(acc);
+  //Display Summary
+  calcDisplaySummary(acc);
+};
+
+let currentAccount;
+// Login Action
+btnLogin.addEventListener("click", function (e) {
+  e.preventDefault();
+
+  currentAccount = accounts.find(
+    (acc) => acc.userName === inputLoginUsername.value
+  );
+  if (Number(inputLoginPin.value) === currentAccount?.pin) {
+    inputLoginUsername.value = inputLoginPin.value = "";
+    inputLoginPin.blur();
+
+    containerApp.style.opacity = 100;
+
+    labelWelcome.textContent = `Welcome back, ${
+      currentAccount.owner.split(" ")[0]
+    }`;
+
+    updateUI(currentAccount);
+  }
+});
+
+// Transfer Action
+btnTransfer.addEventListener("click", function (e) {
+  e.preventDefault();
+
+  let transferAmount = Number(inputTransferAmount.value);
+  let transferAccount = accounts.find(
+    (acc) => acc.userName === inputTransferTo.value
+  );
+  console.log(transferAmount);
+
+  if (
+    transferAccount &&
+    transferAmount > 0 &&
+    transferAmount < currentAccount.balance &&
+    transferAccount?.userName !== currentAccount.userName
+  ) {
+    currentAccount.movements.push(-transferAmount);
+    transferAccount.movements.push(transferAmount);
+    console.log("Transfer successful");
+    updateUI(currentAccount);
+  }
+
+  inputTransferTo.value = inputTransferAmount.value = "";
+  inputTransferAmount.blur();
+});
